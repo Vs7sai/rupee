@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react';
+import { getEnvironmentStatus } from './lib/env';
 import { store } from './store';
 import HomePage from './pages/HomePage';
 import ContestLobbyPage from './pages/ContestLobbyPage';
@@ -24,6 +25,8 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import MobileWrapper from './components/mobile/MobileWrapper';
 
 function App() {
+  const envStatus = getEnvironmentStatus();
+
   return (
     <Provider store={store}>
       <ThemeProvider>
@@ -41,14 +44,18 @@ function App() {
               
               {/* Protected routes */}
               <Route path="/" element={
-                <>
-                  <SignedIn>
-                    <Layout />
-                  </SignedIn>
-                  <SignedOut>
-                    <RedirectToSignIn />
-                  </SignedOut>
-                </>
+                envStatus.hasClerk ? (
+                  <>
+                    <SignedIn>
+                      <Layout />
+                    </SignedIn>
+                    <SignedOut>
+                      <RedirectToSignIn />
+                    </SignedOut>
+                  </>
+                ) : (
+                  <Layout />
+                )
               }>
                 <Route index element={<HomePage />} />
                 <Route path="contests" element={<ContestLobbyPage />} />
