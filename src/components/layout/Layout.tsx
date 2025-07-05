@@ -8,18 +8,20 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { syncWithClerk } from '../../store/slices/authSlice';
 import { useMobile } from '../../hooks/useMobile';
 import MobileHeader from '../mobile/MobileHeader';
+import { getEnvironmentStatus } from '../../lib/env';
 
 const Layout: React.FC = () => {
   const { theme } = useTheme();
   const { isNative } = useMobile();
   const dispatch = useDispatch();
+  const envStatus = getEnvironmentStatus();
   
-  // Use Clerk hooks
-  const { user, isLoaded } = useUser();
+  // Use Clerk hooks only when ClerkProvider is available
+  const { user, isLoaded } = envStatus.hasClerk ? useUser() : { user: null, isLoaded: true };
 
   // Sync Clerk user data with Redux store
   useEffect(() => {
-    if (isLoaded && user) {
+    if (envStatus.hasClerk && isLoaded && user) {
       dispatch(syncWithClerk({
         id: user.id,
         name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
@@ -27,9 +29,9 @@ const Layout: React.FC = () => {
         profilePicture: user.imageUrl
       }));
     }
-  }, [user, isLoaded, dispatch]);
+  }, [user, isLoaded, dispatch, envStatus.hasClerk]);
 
-  if (!isLoaded) {
+  if (envStatus.hasClerk && !isLoaded) {
     // Loading state while Clerk initializes
     return (
       <div className={`min-h-screen flex items-center justify-center ${
